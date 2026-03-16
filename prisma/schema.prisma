@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  contents  Content[]
+  campaigns EmailCampaign[]
+}
+
+model Content {
+  id             String        @id @default(cuid())
+  title          String
+  body           String
+  type           ContentType   @default(POST)
+  status         ContentStatus @default(DRAFT)
+  substackLink   String?
+  notionPageId   String?
+  emailSent      Boolean       @default(false)
+  emailSentAt    DateTime?
+  tags           String?
+  wordCount      Int           @default(0)
+  scheduledAt    DateTime?
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id])
+  campaigns      EmailCampaign[]
+  
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum ContentType {
+  NOTE
+  POST
+}
+
+enum ContentStatus {
+  DRAFT
+  READY_TO_PUBLISH
+  PUBLISHED
+  ARCHIVED
+}
+
+model EmailCampaign {
+  id            String    @id @default(cuid())
+  subject       String
+  body          String
+  contentId     String?
+  content       Content?  @relation(fields: [contentId], references: [id])
+  sent          Boolean   @default(false)
+  sentAt        DateTime?
+  recipientCount Int      @default(0)
+  openRate      Float?
+  clickRate     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  authorId      String?
+  author        User?     @relation(fields: [authorId], references: [id])
+}
+
+model PipelineSettings {
+  id                    String   @id @default(cuid())
+  notionApiKey          String?
+  notionDatabaseId      String?
+  substackPublication   String?
+  substackApiKey        String?
+  emailFrom             String?
+  emailReplyTo          String?
+  autoPublish           Boolean  @default(false)
+  autoEmail             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
